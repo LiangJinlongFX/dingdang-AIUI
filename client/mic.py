@@ -281,7 +281,7 @@ class Mic:
 
         for i in range(0, int(RATE / CHUNK * LISTEN_TIME)):
             try:
-                data = stream.read(CHUNK, exception_on_overflow=False)
+                data = stream.read(CHUNK)
                 frames.append(data)
                 score = self.getScore(data)
 

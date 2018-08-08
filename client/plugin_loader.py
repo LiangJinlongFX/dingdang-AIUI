@@ -1,4 +1,7 @@
 # -*- coding: utf-8-*-
+'''
+    组件加载器实现
+'''
 from __future__ import absolute_import
 import logging
 import pkgutil
@@ -10,19 +13,24 @@ _logger = logging.getLogger(__name__)
 _has_init = False
 
 # plugins run at query
+# 定义运行时的组件列表
 _plugins_query = []
 
 # plugins run at before listen
+# 定义监听前事件的组件列表
 _plugins_before_listen = []
 
 # plugins run at after listen
+# 定义监听后事件的组件列表
 _plugins_after_listen = []
 
+# 定义第三方插件列表
 _thirdparty_exclude_plugins = {'netease_music'}
 
 
 def init_plugins():
     """
+    初始化存在对应路径的组件模块
     Dynamically loads all the plugins in the plugins folder and sorts
     them by the PRIORITY key. If no PRIORITY is defined for a given
     plugin, a priority of 0 is assumed.

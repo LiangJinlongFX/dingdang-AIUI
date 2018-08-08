@@ -78,8 +78,10 @@ class Dingdang(object):
             conversation.wxbot = self.wxBot
             t = threading.Thread(target=self.start_wxbot)
             t.start()
-
-        self.mic.say(salutation, cache=True)
+        
+        #self.mic.say(salutation, cache=True)
+        self.mic.say(u"叮咚叮咚,我能为你做什么", cache=True)
+        #self.mic.music_play('/home/pi/123.mp3')
         conversation.handleForever()
 
 
@@ -87,10 +89,10 @@ if __name__ == "__main__":
 
     print('''
 *******************************************************"
-*             叮当 - 中文语音对话机器人               *
-*          (c) 2017 潘伟洲 <m@hahack.com>             *
-*   https://github.com/wzpan/dingdang-robot.git       *
-*******************************************************
+*             叮当 - 中文语音对话机器人                  *
+*          (c) 2018 梁锦龙 <ljl96@live.com>            *
+*https://github.com/LiangJinlongFX/dingdang_AIUI.git   *
+********************************************************
 
 如需查看log，可以执行 `tail -f 叮当所在目录/temp/dingdang.log`
 

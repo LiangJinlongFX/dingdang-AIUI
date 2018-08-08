@@ -5,12 +5,13 @@ import os
 import subprocess
 import time
 import sys
+from client import dingdangpath
 
 WORDS = [u"PAIZHAO", u"ZHAOPIAN"]
 SLUG = "camera"
 
 
-def handle(text, mic, profile, wxbot=None):
+def handle(text, mic, profile, wxbot=None, pixels=None, oled=None):
     """
         Reports the current time based on the user's timezone.
 
@@ -21,7 +22,7 @@ def handle(text, mic, profile, wxbot=None):
                    number)
         wxbot -- wechat bot instance
     """
-    sys.path.append(mic.dingdangpath.LIB_PATH)
+    sys.path.append(dingdangpath.LIB_PATH)
     from app_utils import sendToUser
 
     quality = 100
@@ -69,7 +70,7 @@ def handle(text, mic, profile, wxbot=None):
             return
         dest_file = os.path.join(dest_path, "%s.jpg" % time.time())
         if usb_camera:
-            command = "fswebcam --no-banner -r 1024x765 -q "
+            command = "fswebcam --no-banner -r 640x480 -q "
             if vertical_flip:
                 command = command+' -s v '
             if horizontal_flip:
@@ -95,7 +96,7 @@ def handle(text, mic, profile, wxbot=None):
                 mic.say(u"拍照失败，请检查相机是否连接正确", cache=True)
             return
         if sound:
-            mic.play(mic.dingdangpath.data('audio', 'camera.wav'))
+            mic.play(dingdangpath.data('audio', 'camera.wav'))
         # send to user
         if send_to_user:
             target = '邮箱'

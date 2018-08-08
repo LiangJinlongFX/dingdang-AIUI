@@ -1,9 +1,21 @@
 # -*- coding: utf-8-*-
+'''
+	智能对话机器人实现
+	包含:
+		AIUI
+		图灵机器人
+		小影机器人
+	建议使用AIUI
+'''
 from __future__ import print_function
 from __future__ import absolute_import
 import requests
 import json
 import logging
+import hashlib
+import base64
+import urllib2
+import time
 from uuid import getnode as get_mac
 from .app_utils import sendToUser, create_reminder
 from abc import ABCMeta, abstractmethod
@@ -19,199 +31,162 @@ sys.setdefaultencoding('utf-8')
 
 
 class AbstractRobot(object):
+	"""docstring for AbstractRobot"""
+	__metaclass__ = ABCMeta
 
-    __metaclass__ = ABCMeta
+	@classmethod
+	def get_instance(cls,mic,profile,wxbot=None):
+		'''获取机器人实例'''
+		instance = cls(mic,profile,wxbot)
+		cls.mic = mic
+		cls.wxbot = wxbot
+		return instance
 
-    @classmethod
-    def get_instance(cls, mic, profile, wxbot=None):
-        instance = cls(mic, profile, wxbot)
-        cls.mic = mic
-        cls.wxbot = wxbot
-        return instance
+	def __init__(self,**kwargs):
+		#创建模块日志记录器
+		self._logger = logging.getLogger(__name__)
 
-    def __init__(self, **kwargs):
-        self._logger = logging.getLogger(__name__)
+	@abstractmethod
+	def chat(self,texts):
+		pass
 
-    @abstractmethod
-    def chat(self, texts):
-        pass
+class AIUIRobot(AbstractRobot):
+	"""docstring for AIUIRobot"""
+	SLUG = "AIUI"
+	
+	def __init__(self,mic,profile,wxbot=None):
+		super(self.__class__, self).__init__()	#继承AbstractRobot
+		self.mic = mic
+		self.profile = profile
+		self.wxbot = wxbot
+		self.aiui_url = "http://openapi.xfyun.cn/v2/aiui"
+		self.appid = self.get_appid()
+		self.api_key = self.get_key()	#获取AIUI API信息
+		self.auth_id = self.get_authid()
+	
+	def get_appid(self):
+		if 'AIUI' in self.profile:
+			if 'appid' in self.profile['AIUI']:
+				appid = \
+					self.profile['AIUI']['appid']
+		return appid
+	
+	def get_key(self):
+		if 'AIUI' in self.profile:
+			if 'api_key' in self.profile['AIUI']:
+				api_key = \
+					self.profile['AIUI']['api_key']
+		return api_key
+
+	def get_authid(self):
+		if 'AIUI' in self.profile:
+			if 'auth_id' in self.profile['AIUI']:
+				auth_id = \
+					self.profile['AIUI']['auth_id']
+		return auth_id
+
+	def chat(self,texts):
+		'''
+		使用AIUI聊天
+		'''
+		answer,data_flag,data_body = self.Conversation(texts) #传入对话参数
+		if answer == None:
+			self.mic.say(u"抱歉,我的大脑短路了，请稍后再试试",cache=True)
+		else:
+			self.mic.say(answer)
+			#self._logger.debug("附加的数据:"+data_body['playUrl'])
+
+	def Conversation(self,text):
+		'''
+		AIUI会话请求函数
+		'''
+		Param = {
+			"scene":"main",			#情景模式
+			"auth_id":self.auth_id,		#用户ID
+			"data_type":"text",		#数据类型	文本：text  音频：audio
+			"result_level":"plain"	#结果级别
+		}
+		# 配置参数编码为base64字符串，过程：字典→明文字符串→utf8编码→base64(bytes)→base64字符串
+		Param_str = json.dumps(Param)    #得到明文字符串
+		Param_utf8 = Param_str.encode('utf8')    #得到utf8编码(bytes类型)
+		Param_b64 = base64.b64encode(Param_utf8)    #得到base64编码(bytes类型)
+		Param_b64str = Param_b64.decode('utf8')    #得到base64字符串
+
+		# 构造HTTP请求的头部
+		time_now = str(int(time.time()))
+		checksum = (self.api_key + time_now + Param_b64str).encode('utf8')
+		checksum_md5 = hashlib.md5(checksum).hexdigest()
+		header = {
+    		"X-Appid": self.appid,
+    		"X-CurTime": time_now,
+    		"X-Param": Param_b64str,
+    		"X-CheckSum": checksum_md5
+		}
+		#构造HTTP 请求body
+		Body_utf8 = text.encode('utf8')    #得到utf8编码(bytes类型)
+		Body_b64 = base64.b64encode(Body_utf8)    #得到base64编码(bytes类型)
+		Body_data = Body_b64.decode('utf8')    #得到base64字符串
+		#发送请求
+		try:
+			req = urllib2.Request(self.aiui_url, data=text.encode('utf8'), headers=header)
+		except requests.exceptions.ConnectionError:
+			self._logger.debug("连接失败...")
+		try:
+			response = urllib2.urlopen(req)
+		except:
+			self._logger.debug("请求失败")
+			return None,None,None
+		#处理响应数据
+		#self._logger.debug("请求响应状态码："+response.status)
+
+		return self.Deal_ResData(response)
 
 
-class TulingRobot(AbstractRobot):
+	def Deal_ResData(self,response):
+		'''
+		处理响应数据的方法
+		'''
+		data_flag = False 	#是否有附加数据 无:0  有:1
+		data_body = {}		#创建附加数据的字典
+		json_data = json.loads(response.read().decode('utf8'))
+		#如果是非零的错误码,直接返回
+		self._logger.debug("对话响应状态码："+str(json_data['code']))
+		if json_data['code'] != '0':
+			res_data = "响应失败"
+			return res_data,data_flag,data_body
+		json_str = json_data['data']
+		json_str1 = json_str[0]['intent']
+		#检查是否有智能答复的键值
+		if 'answer' in json_str1.keys():
+			answer_text = json_str1['answer']['text']	#获取AIUI答复的文本
+			if 'data' in json_str1.keys():	#如果有附加的数据
+				#如果有附加的数据
+				try:
+					if json_str1['data']['result'] != []:
+						data_flag = True	#附加数据标志
+						#获取返回结果的第一个
+						answer_data = json_str1['data']['result'][0]
+						if 'playUrl' in answer_data.keys():		#判断是否有播放连接
+							data_body.setdefault("playUrl",answer_data['playUrl'])
+							self._logger.debug("playUrl"+str(answer_data['playUrl']))
+						elif 'url' in answer_data.keys():
+							data_body.setdefault("playUrl",answer_data['url'])
+							self._logger.debug("url"+str(answer_data['url']))
+						else:
+							data_flag = False
+				except Exception:
+					self._logger.debug("获取附加数据异常!")
+			res_data = answer_text
+		else:	#没有相应的场景将回显
+			res_data = json_str1['text']
 
-    SLUG = "tuling"
+		#去除诗词中存在的[k3]-[k0]符号
+		if '[k3]' in res_data:
+			res_data = res_data.replace('[k3]','')
+			if '[k0]' in res_data:
+				res_data = res_data.replace('[k0]','')
 
-    def __init__(self, mic, profile, wxbot=None):
-        """
-        图灵机器人
-        """
-        super(self.__class__, self).__init__()
-        self.mic = mic
-        self.profile = profile
-        self.wxbot = wxbot
-        self.tuling_key = self.get_key()
-
-    def get_key(self):
-        if 'tuling' in self.profile:
-            if 'tuling_key' in self.profile['tuling']:
-                tuling_key = \
-                    self.profile['tuling']['tuling_key']
-        return tuling_key
-
-    def chat(self, texts):
-        """
-        使用图灵机器人聊天
-
-        Arguments:
-        texts -- user input, typically speech, to be parsed by a module
-        """
-        msg = ''.join(texts)
-        try:
-            url = "http://www.tuling123.com/openapi/api"
-            userid = str(get_mac())[:32]
-            body = {'key': self.tuling_key, 'info': msg, 'userid': userid}
-            r = requests.post(url, data=body)
-            respond = json.loads(r.text)
-            result = ''
-            if respond['code'] == 100000:
-                result = respond['text'].replace('<br>', '  ')
-                result = result.replace(u'\xa0', u' ')
-            elif respond['code'] == 200000:
-                result = respond['url']
-            elif respond['code'] == 302000:
-                for k in respond['list']:
-                    result = result + u"【" + k['source'] + u"】 " +\
-                        k['article'] + "\t" + k['detailurl'] + "\n"
-            else:
-                result = respond['text'].replace('<br>', '  ')
-                result = result.replace(u'\xa0', u' ')
-            max_length = 200
-            if 'max_length' in self.profile:
-                max_length = self.profile['max_length']
-            if len(result) > max_length and \
-               self.profile['read_long_content'] is not None and \
-               not self.profile['read_long_content']:
-                target = '邮件'
-                if self.wxbot is not None and self.wxbot.my_account != {} \
-                   and not self.profile['prefers_email']:
-                    target = '微信'
-                self.mic.say(u'一言难尽啊，我给您发%s吧' % target, cache=True)
-                if sendToUser(self.profile, self.wxbot, u'回答%s' % msg, result):
-                    self.mic.say(u'%s发送成功！' % target, cache=True)
-                else:
-                    self.mic.say(u'抱歉，%s发送失败了！' % target, cache=True)
-            else:
-                self.mic.say(result, cache=True)
-            if result.endswith('?') or result.endswith(u'？') or \
-               u'告诉我' in result or u'请回答' in result:
-                self.mic.skip_passive = True
-        except Exception:
-            self._logger.critical("Tuling robot failed to responsed for %r",
-                                  msg, exc_info=True)
-            self.mic.say("抱歉, 我的大脑短路了 " +
-                         "请稍后再试试.", cache=True)
-
-
-class Emotibot(AbstractRobot):
-
-    SLUG = "emotibot"
-
-    def __init__(self, mic, profile, wxbot=None):
-        """
-        Emotibot机器人
-        """
-        super(self.__class__, self).__init__()
-        self.mic = mic
-        self.profile = profile
-        self.wxbot = wxbot
-        (self.appid, self.location, self.more) = self.get_config()
-
-    def get_config(self):
-        if 'emotibot' in self.profile:
-            if 'appid' in self.profile['emotibot']:
-                appid = \
-                    self.profile['emotibot']['appid']
-            if 'location' in self.profile:
-                location = \
-                    self.profile['location']
-            else:
-                location = None
-            if 'active_mode' in self.profile['emotibot']:
-                more = \
-                    self.profile['emotibot']['active_mode']
-            else:
-                more = False
-        return (appid, location, more)
-
-    def chat(self, texts):
-        """
-        使用Emotibot机器人聊天
-
-        Arguments:
-        texts -- user input, typically speech, to be parsed by a module
-        """
-        msg = ''.join(texts)
-        try:
-            url = "http://idc.emotibot.com/api/ApiKey/openapi.php"
-            userid = str(get_mac())[:32]
-            register_data = {
-                "cmd": "chat",
-                "appid": self.appid,
-                "userid": userid,
-                "text": msg,
-                "location": self.location
-            }
-            r = requests.post(url, params=register_data)
-            jsondata = json.loads(r.text)
-            result = ''
-            responds = []
-            if jsondata['return'] == 0:
-                if self.more:
-                    datas = jsondata.get('data')
-                    for data in datas:
-                        if data.get('type') == 'text':
-                            responds.append(data.get('value'))
-                else:
-                    responds.append(jsondata.get('data')[0].get('value'))
-                result = '\n'.join(responds)
-
-                if jsondata.get('data')[0]['cmd'] == 'reminder':
-                    data = jsondata.get('data')[0]
-                    remind_info = data.get('data').get('remind_info')
-                    remind_event = remind_info[0].get('remind_event')
-                    remind_time = remind_info[0].get('remind_time')
-
-                    if not create_reminder(remind_event, remind_time):
-                        result = u'创建提醒失败了'
-            else:
-                result = u"抱歉, 我的大脑短路了，请稍后再试试."
-            max_length = 200
-            if 'max_length' in self.profile:
-                max_length = self.profile['max_length']
-            if len(result) > max_length and \
-               self.profile['read_long_content'] is not None and \
-               not self.profile['read_long_content']:
-                target = '邮件'
-                if self.wxbot is not None and self.wxbot.my_account != {} \
-                   and not self.profile['prefers_email']:
-                    target = '微信'
-                self.mic.say(u'一言难尽啊，我给您发%s吧' % target, cache=True)
-                if sendToUser(self.profile, self.wxbot, u'回答%s' % msg, result):
-                    self.mic.say(u'%s发送成功！' % target, cache=True)
-                else:
-                    self.mic.say(u'抱歉，%s发送失败了！' % target, cache=True)
-            else:
-                self.mic.say(result)
-            if result.endswith('?') or result.endswith(u'？') or \
-               u'告诉我' in result or u'请回答' in result:
-                self.mic.skip_passive = True
-
-        except Exception:
-            self._logger.critical("Emotibot failed to responsed for %r",
-                                  msg, exc_info=True)
-            self.mic.say("抱歉, 我的大脑短路了 " +
-                         "请稍后再试试.", cache=True)
-
+		return res_data,data_flag,data_body
 
 def get_robot_by_slug(slug):
     """
@@ -219,18 +194,19 @@ def get_robot_by_slug(slug):
         A robot implementation available on the current platform
     """
     if not slug or type(slug) is not str:
-        raise TypeError("Invalid slug '%s'", slug)
+    	raise TypeError("Invalid slug '%s'", slug)
 
     selected_robots = filter(lambda robot: hasattr(robot, "SLUG") and
-                             robot.SLUG == slug, get_robots())
+		robot.SLUG == slug, get_robots())
+
     if len(selected_robots) == 0:
-        raise ValueError("No robot found for slug '%s'" % slug)
+    	raise ValueError("No robot found for slug '%s'" % slug)
     else:
-        if len(selected_robots) > 1:
-            print("WARNING: Multiple robots found for slug '%s'. " +
-                  "This is most certainly a bug." % slug)
-        robot = selected_robots[0]
-        return robot
+    	if len(selected_robots) > 1:
+    		print("WARNING: Multiple robots found for slug '%s'. " +
+				"This is most certainly a bug." % slug)
+    	robot = selected_robots[0]
+    	return robot
 
 
 def get_robots():
@@ -243,3 +219,5 @@ def get_robots():
     return [robot for robot in
             list(get_subclasses(AbstractRobot))
             if hasattr(robot, 'SLUG') and robot.SLUG]
+		
+		

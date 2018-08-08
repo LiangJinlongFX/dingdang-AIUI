@@ -6,6 +6,7 @@ from .notifier import Notifier
 from .brain import Brain
 from . import config
 from .drivers.pixels import Pixels
+from .drivers.oled import OLED
 
 
 class Conversation(object):
@@ -26,7 +27,15 @@ class Conversation(object):
                     signal_led_profile['pin']:
                 self.pixels = Pixels(signal_led_profile['gpio_mode'],
                                      signal_led_profile['pin'])
-
+        self.oled = None
+        if config.has('oled'):
+            self.oled = OLED()
+            self.oled.wakeup()
+        
+        # !!! 常驻于主动监听,正式使用时务必去除 ！！！
+        #self.mic.chatting_mode = True
+        #self.mic.skip_passive = True
+    
     @staticmethod
     def is_proper_time():
         """
@@ -85,12 +94,14 @@ class Conversation(object):
                 self._logger.debug("Skip passive listening")
                 if not self.mic.chatting_mode:
                     self.mic.skip_passive = False
-                continue
+                #continue
 
             if self.pixels:
                 self.pixels.wakeup()
             self._logger.debug("Started to listen actively with threshold: %r",
                                threshold)
+            if self.oled:
+                self.oled.listen()
 
             input = self.mic.activeListenToAllOptions(threshold)
             self._logger.debug("Stopped to listen actively with threshold: %r",
@@ -100,10 +111,15 @@ class Conversation(object):
                 self.pixels.think()
 
             if input:
-                self.brain.query(input, self.wxbot)
+                self.brain.query(input, self.wxbot, oled=self.oled)
             elif config.get('shut_up_if_no_input', False):
                 self._logger.info("Active Listen return empty")
             else:
-                self.mic.say(u"什么?")
+                if not self.mic.chatting_mode:
+                    self.mic.say(u"啥事?")
+            #if self.oled:
+            #    self.oled.speak()
             if self.pixels:
                 self.pixels.off()
+            if self.oled:
+                self.oled.off()

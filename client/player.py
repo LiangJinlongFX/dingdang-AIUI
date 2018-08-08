@@ -1,4 +1,11 @@
 # -*- coding: utf-8-*-
+'''
+    声音播放功能模块
+    包含:
+        播放小音频的方法: pyaudio、aplay
+        播放音频文件的方法: play、vlc、pygame
+    !!!请在配置文件指定相应的播放方法
+'''
 import subprocess
 import time
 
@@ -21,8 +28,10 @@ _music_instance = None
 _vlc_media_player = None
 
 
-class AbstractSoundPlayer(threading.Thread):
 
+class AbstractSoundPlayer(threading.Thread):
+    ''' 声音播放抽象基类 '''
+    ''' 继承自线程类 '''
     def __init__(self, **kwargs):
         super(AbstractSoundPlayer, self).__init__()
 
@@ -40,6 +49,8 @@ class AbstractSoundPlayer(threading.Thread):
 
 
 class AudioSoundPlayer(AbstractSoundPlayer):
+    ''' 使用pyaudio作为播放音频类 '''
+    
     SLUG = 'pyaudio'
 
     def __init__(self, src, audio=None, **kwargs):
@@ -89,6 +100,7 @@ class AudioSoundPlayer(AbstractSoundPlayer):
 
 
 class ShellSoundPlayer(AbstractSoundPlayer):
+    ''' 使用自带的aplay播放声音 '''
     SLUG = 'aplay'
 
     def __init__(self, src, **kwargs):
@@ -131,9 +143,11 @@ class ShellSoundPlayer(AbstractSoundPlayer):
 
 
 class AbstractMusicPlayer(threading.Thread):
+    ''' 音频文件播放抽象基类 '''
 
     def __init__(self, **kwargs):
         super(AbstractMusicPlayer, self).__init__()
+        self.daemon = True
 
     def play(self):
         pass
@@ -284,9 +298,11 @@ class PyGameMusicPlayer(AbstractMusicPlayer):
 
 
 class Sound(object):
+    ''' 声音播放功能类 '''
 
     def __init__(self, slug, audio=None):
-        for sound_engine in get_subclasses(AbstractSoundPlayer):
+        #遍历继承AbstractSoundPlayer的子类,并选中配置文件中指定的播放方法
+        for sound_engine in get_subclasses(AbstractSoundPlayer):    
             if hasattr(sound_engine, 'SLUG') and sound_engine.SLUG == slug:
                 self.slug = slug
                 self.sound_engine = sound_engine
@@ -301,6 +317,7 @@ class Sound(object):
         self.thread.play()
 
     def play_block(self, src):
+        ''' 阻塞主线程式播放 '''
         t = self.sound_engine(src, audio=self.audio)
         t.play_block()
 
@@ -314,6 +331,7 @@ class Sound(object):
 
 
 class Music(object):
+    ''' 音频文件播放功能类 '''
 
     def __init__(self, slug):
         for music_engine in get_subclasses(AbstractMusicPlayer):
@@ -350,6 +368,7 @@ class Music(object):
 
 
 def get_subclasses(cls):
+    ''' 获取继承某个类的子类列表 '''
     subclasses = set()
     for subclass in cls.__subclasses__():
         subclasses.add(subclass)
@@ -358,6 +377,7 @@ def get_subclasses(cls):
 
 
 def get_sound_manager(audio=None):
+    '''声音播放配置 '''
     from . import config
     global _sound_instance
     if not _sound_instance:
@@ -367,6 +387,7 @@ def get_sound_manager(audio=None):
 
 
 def get_music_manager():
+    ''' 音乐播放配置 '''
     from . import config
     global _music_instance
     if not _music_instance:

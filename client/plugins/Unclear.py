@@ -1,4 +1,8 @@
 # -*- coding: utf-8-*-
+'''
+    其他的插件无法解析的输入文本就交由这个插件处理,一般接入智能对话机器人
+    插件优先级设置为最低
+'''
 from sys import maxint
 import random
 from client.robot import get_robot_by_slug
@@ -14,7 +18,7 @@ def need_robot(profile):
     return False
 
 
-def handle(text, mic, profile, wxbot=None):
+def handle(text, mic, profile, wxbot=None, pixels=None, oled=None):
     """
     Reports that the user has unclear or unusable input.
 

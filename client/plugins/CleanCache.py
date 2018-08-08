@@ -2,13 +2,14 @@
 
 import os
 import shutil
+from client import dingdangpath
 
 WORDS = [u"HUANCUN"]
 SLUG = "cleancache"
 PRIORITY = 0
 
 
-def handle(text, mic, profile, wxbot=None):
+def handle(text, mic, profile, wxbot=None, pixels=None, oled=None):
     """
         Reports the current time based on the user's timezone.
 
@@ -19,7 +20,7 @@ def handle(text, mic, profile, wxbot=None):
                    number)
         wxBot -- wechat robot
     """
-    temp = mic.dingdangpath.TEMP_PATH
+    temp = dingdangpath.TEMP_PATH
     shutil.rmtree(temp)
     os.mkdir(temp)
     mic.say(u'缓存目录已清空', cache=True)

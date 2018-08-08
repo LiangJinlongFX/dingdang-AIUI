@@ -1,4 +1,10 @@
 # -*- coding: utf-8-*-
+'''
+ 用于消息通知的功能实现
+ 目前支持:
+    邮件通知
+    机器人消息通知
+'''
 from __future__ import absolute_import
 import atexit
 from .plugins import Email
@@ -14,9 +20,9 @@ else:
 
 
 class Notifier(object):
-
+    ''' 消息通知功能类 '''
     class NotificationClient(object):
-
+        ''' 通知客户端实现类 '''
         def __init__(self, gather, timestamp):
             self.gather = gather
             self.timestamp = timestamp
@@ -25,12 +31,13 @@ class Notifier(object):
             self.timestamp = self.gather(self.timestamp)
 
     def __init__(self, profile, brain):
-        self._logger = logging.getLogger(__name__)
-        self.q = queue.Queue()
-        self.profile = profile
-        self.notifiers = []
-        self.brain = brain
+        self._logger = logging.getLogger(__name__)  #创建日志记录器  
+        self.q = queue.Queue()  #创建消息队列
+        self.profile = profile  #加载的配置文件
+        self.notifiers = []     #通知的消息列表
+        self.brain = brain      #处理中枢
 
+        # 检查配置文件中是否使能了email
         if 'email' in profile and \
            ('enable' not in profile['email'] or profile['email']['enable']):
             self.notifiers.append(self.NotificationClient(
@@ -39,6 +46,7 @@ class Notifier(object):
             self._logger.debug('email account not set ' +
                                'in profile, email notifier will not be used')
 
+        # 检查配置文件中是否使能了机器人通知功能
         if 'robot' in profile and profile['robot'] == 'emotibot':
             self.notifiers.append(self.NotificationClient(
                 self.handleRemenderNotifications, None))

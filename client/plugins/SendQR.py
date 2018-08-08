@@ -7,7 +7,7 @@ WORDS = [u"ERWEIMA"]
 SLUG = "sendqr"
 
 
-def handle(text, mic, profile, wxbot=None):
+def handle(text, mic, profile, wxbot=None, pixels=None, oled=None):
     """
         Reports the current time based on the user's timezone.
 

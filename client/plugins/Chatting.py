@@ -15,7 +15,7 @@ WORDS = ["XIANLIAO"]
 SLUG = "chatting"
 
 
-def handle(text, mic, profile, wxbot=None):
+def handle(text, mic, profile, wxbot=None, pixels=None, oled=None):
     """
     Responds to user-input, typically speech text
 

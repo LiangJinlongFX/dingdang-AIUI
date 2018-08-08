@@ -1,4 +1,8 @@
 # -*- coding: utf-8-*-
+'''
+    邮箱查看插件
+    使用SSL加密,注意在配置文件配置正确的端口
+'''
 from __future__ import absolute_import
 import imaplib
 import email
@@ -137,7 +141,7 @@ def fetchUnreadEmails(profile, since=None, markRead=False, limit=None):
         A list of unread email objects.
     """
     logger = logging.getLogger(__name__)
-    conn = imaplib.IMAP4(profile[SLUG]['imap_server'],
+    conn = imaplib.IMAP4_SSL(profile[SLUG]['imap_server'],
                          profile[SLUG]['imap_port'])
     conn.debug = 0
 
@@ -174,7 +178,7 @@ def fetchUnreadEmails(profile, since=None, markRead=False, limit=None):
     return msgs
 
 
-def handle(text, mic, profile, wxbot=None):
+def handle(text, mic, profile, wxbot=None, pixels=None, oled=None):
     """
         Responds to user-input, typically speech text, with a summary of
         the user's email inbox, reporting on the number of unread emails

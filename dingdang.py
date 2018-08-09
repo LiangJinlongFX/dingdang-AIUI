@@ -16,6 +16,13 @@ from client import WechatBot
 from client.conversation import Conversation
 from client import config
 
+try:
+    import RPi.GPIO as GPIO
+except RuntimeError:
+    logging.getLogger(__name__).error("Error importing RPi.GPIO!" +
+                                      "This is probably because you need superuser privileges." +
+                                      "You can achieve this by using 'sudo' to run your script", exc_info=True)
+
 # Add dingdangpath.LIB_PATH to sys.path
 sys.path.append(dingdangpath.LIB_PATH)
 
@@ -133,15 +140,18 @@ if __name__ == "__main__":
         app = Dingdang()
     except Exception:
         logger.exception("Error occured!")
+        GPIO.cleanup()
         sys.exit(1)
 
     try:
         app.run()
     except KeyboardInterrupt:
         logger.info("dingdang get Keyboard Interrupt, exit.")
+        GPIO.cleanup()
         print("dingdang exit.")
     except Exception:
         logger.exception("dingdang quit unexpectedly!")
+        GPIO.cleanup()
         if not args.verbose:
             msg = traceback.format_exc()
             print("** dingdang quit unexpectedly! ** ")

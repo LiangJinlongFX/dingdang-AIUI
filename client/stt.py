@@ -50,6 +50,7 @@ class AbstractSTTEngine(object):
     @classmethod
     def get_instance(cls, vocabulary_name, phrases):
         profile = cls.get_config()
+
         if cls.VOCABULARY_TYPE:
             vocabulary = cls.VOCABULARY_TYPE(vocabulary_name,
                                              path=dingdangpath.config(
@@ -57,6 +58,7 @@ class AbstractSTTEngine(object):
             if not vocabulary.matches_phrases(phrases):
                 vocabulary.compile(phrases)
             profile['vocabulary'] = vocabulary
+        
         instance = cls(**profile)
         return instance
 

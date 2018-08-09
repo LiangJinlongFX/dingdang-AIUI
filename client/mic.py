@@ -17,6 +17,13 @@ from . import config
 from . import player
 from . import plugin_loader
 
+try:
+    import RPi.GPIO as GPIO
+except RuntimeError:
+    logging.getLogger(__name__).error("Error importing RPi.GPIO!" +
+                                      "This is probably because you need superuser privileges." +
+                                      "You can achieve this by using 'sudo' to run your script", exc_info=True)   
+
 
 class Mic:
     speechRec = None
@@ -48,12 +55,20 @@ class Mic:
             asound.snd_lib_error_set_handler(mute_alsa.c_error_handler)
         except OSError:
             pass
+
         self._audio = pyaudio.PyAudio()
         self._logger.info("Initialization of PyAudio completed.")
         self.sound = player.get_sound_manager(self._audio)
         self.stop_passive = False
         self.skip_passive = False
         self.chatting_mode = False
+        
+        #初始化唤醒检测引脚
+        self.wakeup_pin = config.get('WakeUp_Pin',15)
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setwarnings(False)
+        GPIO.setup(self.wakeup_pin, GPIO.IN)
+        
 
     def __del__(self):
         self._audio.terminate()
@@ -119,6 +134,16 @@ class Mic:
         """
         self.stop_passive = True
 
+    def passiveListen(self,PERSONA):
+        """
+
+        """
+        while True:
+            if GPIO.wait_for_edge(self.wakeup_pin,GPIO.RISING):
+                self._logger.debug(u"WAKE UP!!!")
+                return True, True
+
+    '''
     def passiveListen(self, PERSONA):
         """
         Listens for PERSONA in everyday sound. Times out after LISTEN_TIME, so
@@ -238,6 +263,7 @@ class Mic:
             return THRESHOLD, PERSONA
 
         return False, transcribed
+    '''
 
     def activeListen(self, THRESHOLD=None, LISTEN=True, MUSIC=False):
         """

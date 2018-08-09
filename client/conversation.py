@@ -103,6 +103,7 @@ class Conversation(object):
             if self.oled:
                 self.oled.listen()
 
+            threshold = None
             input = self.mic.activeListenToAllOptions(threshold)
             self._logger.debug("Stopped to listen actively with threshold: %r",
                                threshold)

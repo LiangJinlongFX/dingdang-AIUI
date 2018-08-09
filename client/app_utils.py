@@ -86,11 +86,14 @@ def emailUser(profile, SUBJECT="", BODY="", ATTACH_LIST=[]):
 
 def wechatUser(profile, wxbot, SUBJECT="", BODY="",
                ATTACH_LIST=[], IMAGE_LIST=[]):
+    ''' 发送信息给文件传输助手 发送给账号本身不可用'''
     _logger = logging.getLogger(__name__)
     if wxbot is not None and wxbot.my_account != {}:
         try:
             # send message
-            user_id = wxbot.my_account['UserName']
+            user_id = u'filehelper'
+            #user_id = wxbot.my_account['UserName']
+            _logger.debug("user_id: %s",str(user_id))
             if BODY != '':
                 wxbot.send_msg_by_uid(SUBJECT + "\n" + BODY, user_id)
             else:

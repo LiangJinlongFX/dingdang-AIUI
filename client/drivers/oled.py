@@ -74,6 +74,14 @@ class OLED():
 		self.next.set()
 		self.queue.put(f)
 
+	def show_QR(self,image_path):
+		''' 显示微信登录二维码 '''
+		def f():
+			self._DisplayPNG(image_path)
+
+		self.next.set()
+		self.queue.put(f)
+
 	def off(self):
 		self.next.set()
 		self.queue.put(self._off)
@@ -149,7 +157,7 @@ class OLED():
 		background.paste(ImageFile.resize(size),posn)
 		background = background.convert(device.mode)	#将图像转换为单色模式
 		while not self.next.is_set():
-			self.device.display(background)
+			device.display(background)
 	
 	def _off(self):
 		self.next.clear()

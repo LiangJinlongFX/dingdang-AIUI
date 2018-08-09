@@ -11,7 +11,7 @@ from .drivers.oled import OLED
 
 class Conversation(object):
 
-    def __init__(self, persona, mic):
+    def __init__(self, persona, mic, oled):
         self._logger = logging.getLogger(__name__)
         self.persona = persona
         self.mic = mic
@@ -27,10 +27,7 @@ class Conversation(object):
                     signal_led_profile['pin']:
                 self.pixels = Pixels(signal_led_profile['gpio_mode'],
                                      signal_led_profile['pin'])
-        self.oled = None
-        if config.has('oled'):
-            self.oled = OLED()
-            self.oled.wakeup()
+        self.oled = oled
         
         # !!! 常驻于主动监听,正式使用时务必去除 ！！！
         #self.mic.chatting_mode = True

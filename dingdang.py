@@ -15,6 +15,7 @@ from client import diagnose
 from client import WechatBot
 from client.conversation import Conversation
 from client import config
+from client.drivers.oled import OLED
 
 try:
     import RPi.GPIO as GPIO
@@ -66,28 +67,41 @@ class Dingdang(object):
             stt_passive_engine_class.get_passive_instance(),
             stt_engine_class.get_active_instance())
 
+        # Initialize OLED
+        self.oled = None
+        if config.has('oled'):
+            self.oled = OLED()
+            self.oled.wakeup()       
+
     def start_wxbot(self):
-        print(u"请扫描如下二维码登录微信")
+        self.mic.say(u"请扫描如下二维码登录微信", cache=True)
+        self.wxBot.get_uuid()
+        self.wxBot.gen_qr_code(os.path.join(dingdangpath.TEMP_PATH,'wxqr.png'))
+        self.oled.show_QR(os.path.join(dingdangpath.TEMP_PATH,'wxqr.png'))
         print(u"登录成功后，可以与自己的微信账号（不是文件传输助手）交互")
+    
+    def run_wxbot(self):
         self.wxBot.run(self.mic)
+
 
     def run(self):
         salutation = (u"%s，我能为您做什么?" % config.get("first_name", u'主人'))
 
         persona = config.get("robot_name", 'DINGDANG')
-        conversation = Conversation(persona, self.mic)
+        conversation = Conversation(persona, self.mic, self.oled)
 
         # create wechat robot
         if config.get('wechat', False):
             self.wxBot = WechatBot.WechatBot(conversation.brain)
             self.wxBot.DEBUG = True
             self.wxBot.conf['qr'] = 'tty'
+            self.start_wxbot()
             conversation.wxbot = self.wxBot
-            t = threading.Thread(target=self.start_wxbot)
+            t = threading.Thread(target=self.run_wxbot)
             t.start()
         
         #self.mic.say(salutation, cache=True)
-        self.mic.say(u"叮咚叮咚,我能为你做什么", cache=True)
+        self.mic.say(u"你好呀", cache=True)
         #self.mic.music_play('/home/pi/123.mp3')
         conversation.handleForever()
 

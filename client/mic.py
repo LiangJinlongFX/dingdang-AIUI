@@ -376,9 +376,11 @@ class Mic:
             cache=False):
         self._logger.info(u"机器人说：%s" % phrase)
         self.stop_passive = True
-        if self.wxbot is not None:
-            wechatUser(config.get(), self.wxbot, "%s: %s" %
-                       (self.robot_name, phrase), "")
+        #决定是否要将机器人的响应发送给微信
+        if config.has('SaytoWechat'):
+            if self.wxbot is not None:
+                wechatUser(config.get(), self.wxbot, "%s: %s" %
+                        (self.robot_name, phrase), "")
         # incase calling say() method which
         # have not implement cache feature yet.
         # the count of args should be 3.

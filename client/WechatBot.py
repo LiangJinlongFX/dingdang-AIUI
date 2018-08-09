@@ -12,7 +12,7 @@ from client import config
 
 
 class WechatBot(WXBot):
-    def __init__(self, brain):
+    def __init__(self, brain,):
         WXBot.__init__(self)
         self.brain = brain
         self.music_mode = None
@@ -38,7 +38,8 @@ class WechatBot(WXBot):
            (msg['to_user_id'] == self.my_account['UserName'] or
                 msg['to_user_id'] == u'filehelper')):
             from_user = profile['first_name'] + '说：'
-            msg_data = from_user + msg['content']['data']
+            #msg_data = from_user + msg['content']['data']
+            msg_data = msg['content']['data']
             if msg['content']['type'] == 0:
                 if msg_data.startswith(profile['robot_name_cn']+": "):
                     return

@@ -1176,8 +1176,12 @@ class WXBot:
         return 'unknown'
 
     def run(self, Mic=None):
-        self.get_uuid()
-        self.gen_qr_code(os.path.join(dingdangpath.LOGIN_PATH,'wxqr.png'))
+        """
+        微信运行函数
+        将登录扫码函数调用改写在主体中供OLED调用
+        """
+        #self.get_uuid()
+        #self.gen_qr_code(os.path.join(dingdangpath.LOGIN_PATH,'wxqr.png'))
         print('[INFO] Please use WeChat to scan the QR code .')
 
         result = self.wait4login()
@@ -1228,8 +1232,9 @@ class WXBot:
         string = 'https://login.weixin.qq.com/l/' + self.uuid
         qr = pyqrcode.create(string)
         if self.conf['qr'] == 'png':
-            qr.png(qr_file_path, scale=8)
-            show_image(qr_file_path)
+            #生成二维码图像
+            qr.png(qr_file_path, scale=1,quiet_zone=12)
+            #show_image(qr_file_path)
             # img = Image.open(qr_file_path)
             # img.show()
         elif self.conf['qr'] == 'tty':

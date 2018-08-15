@@ -10,6 +10,7 @@ import wave
 import audioop
 import time
 import pyaudio
+import subprocess
 from . import dingdangpath
 from . import mute_alsa
 from .app_utils import wechatUser
@@ -59,15 +60,22 @@ class Mic:
         self._audio = pyaudio.PyAudio()
         self._logger.info("Initialization of PyAudio completed.")
         self.sound = player.get_sound_manager(self._audio)
+        self.music = player.get_music_manager() #   
         self.stop_passive = False
         self.skip_passive = False
         self.chatting_mode = False
         
         #初始化唤醒检测引脚
-        self.wakeup_pin = config.get('WakeUp_Pin',15)
+        self.wakeup_pin = config.get('WakeUp_Pin',12)
         GPIO.setmode(GPIO.BOARD)
         GPIO.setwarnings(False)
         GPIO.setup(self.wakeup_pin, GPIO.IN)
+        #初始化主动聊天按键引脚
+        self.play_pin = config.get('Play_Pin',11)
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setwarnings(False)
+        #GPIO.setup(self.play_pin, GPIO.IN)
+        #GPIO.add_event_detect(self.play_pin, GPIO.BOTH)
         
 
     def __del__(self):
@@ -141,7 +149,8 @@ class Mic:
         while True:
             if GPIO.wait_for_edge(self.wakeup_pin,GPIO.RISING):
                 self._logger.debug(u"WAKE UP!!!")
-                return True, True
+                THRESHOLD = self.fetchThreshold()
+                return THRESHOLD, True
 
     '''
     def passiveListen(self, PERSONA):
@@ -264,7 +273,61 @@ class Mic:
 
         return False, transcribed
     '''
+    def activeListenWithButton(self):
+        """
+        按键触发的主动录音方法
+        """
+        RATE = 16000
+        CHUNK = 1024
+        LISTEN_TIME = 12
+        GPIO.setup(self.play_pin, GPIO.IN)
+        GPIO.add_event_detect(self.play_pin, GPIO.BOTH)
 
+        while not GPIO.event_detected(self.play_pin):
+            pass
+
+        # prepare recording stream
+        stream = self._audio.open(format=pyaudio.paInt16,
+                                  channels=1,
+                                  rate=RATE,
+                                  input=True,
+                                  frames_per_buffer=CHUNK)
+
+        frames = []
+
+        for i in range(0, int(RATE / CHUNK * LISTEN_TIME)):
+            try:
+                data = stream.read(CHUNK)
+                frames.append(data)
+
+                if GPIO.event_detected(self.play_pin):
+                    break
+            except Exception as e:
+                self._logger.error(e)
+                continue
+
+
+        # save the audio data
+        try:
+            stream.stop_stream()
+            stream.close()
+        except Exception as e:
+            self._logger.debug(e)
+            pass
+
+        self.endListenEvent()
+
+        with tempfile.SpooledTemporaryFile(mode='w+b') as f:
+            wav_fp = wave.open(f, 'wb')
+            wav_fp.setnchannels(1)
+            wav_fp.setsampwidth(pyaudio.get_sample_size(pyaudio.paInt16))
+            wav_fp.setframerate(RATE)
+            wav_fp.writeframes(''.join(frames))
+            wav_fp.close()
+            f.seek(0)
+            GPIO.cleanup(self.play_pin)
+            return self.active_stt_engine.transcribe(f)
+    
     def activeListen(self, THRESHOLD=None, LISTEN=True, MUSIC=False):
         """
             Records until a second of silence or times out after 12 seconds
@@ -397,3 +460,6 @@ class Mic:
 
     def play_no_block(self, src):
         self.sound.play(src)
+
+    def music_play(self,src):
+        self.music.play(src)

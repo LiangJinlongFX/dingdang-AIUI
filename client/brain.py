@@ -8,7 +8,7 @@ from .drivers.pixels import Pixels
 
 class Brain(object):
 
-    def __init__(self, mic):
+    def __init__(self, mic, oled=None):
         """
         Instantiates a new Brain object, which cross-references user
         input with a list of plugins. Note that the order of brain.plugins
@@ -33,11 +33,14 @@ class Brain(object):
                 signal_led_profile['gpio_mode'] and \
                     signal_led_profile['pin']:
                 self.pixels = Pixels(signal_led_profile['gpio_mode'],
-                                     signal_led_profile['pin'])       
+                                     signal_led_profile['pin'])
+        #检查是否配置了OLED
+        if oled:
+            self.oled = oled       
             
 
 
-    def query(self, texts, wxbot=None, oled=None, thirdparty_call=False):
+    def query(self, texts, wxbot=None, thirdparty_call=False):
         """
         Passes user input to the appropriate plugin, testing it against
         each candidate plugin's isValid function.
@@ -68,7 +71,7 @@ class Brain(object):
                     self.handling = True
                     continueHandle = plugin.handle(text, self.mic,
                                                    config.get(), wxbot,
-                                                   pixels=self.pixels, oled=oled)
+                                                   pixels=self.pixels, oled=self.oled)
                     self.handling = False
                 except Exception:
                     self._logger.error('Failed to execute plugin',

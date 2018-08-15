@@ -98,6 +98,7 @@ class Dingdang(object):
             self.start_wxbot()
             conversation.wxbot = self.wxBot
             t = threading.Thread(target=self.run_wxbot)
+            t.daemon = True
             t.start()
         
         #self.mic.say(salutation, cache=True)
@@ -163,7 +164,8 @@ if __name__ == "__main__":
         logger.info("dingdang get Keyboard Interrupt, exit.")
         GPIO.cleanup()
         print("dingdang exit.")
-    except Exception:
+    except Exception as e:
+        print(e)
         logger.exception("dingdang quit unexpectedly!")
         GPIO.cleanup()
         if not args.verbose:

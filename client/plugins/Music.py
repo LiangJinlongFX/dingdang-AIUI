@@ -31,7 +31,8 @@ def handle(text,mic,profile,wxbot=None, pixels=None, oled=None):
             playlist = Get_LocalMusic(local_path)
             song = random.choice(playlist)
             mic.say('即将为你播放,%s' % song['song_name'], cache=True)
-            play(song)
+            #play(song)
+            mic.music_play(song['play_path'])
         elif any(word in text for word in [u'不听了',u'关闭音乐']):
             Del_Thread("play")
             mic.say(u'已关闭音乐', cache=True)

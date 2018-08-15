@@ -156,6 +156,7 @@ class OLED():
 		background = Image.new("RGBA", device.size, "black")	#创建背景图像
 		background.paste(ImageFile.resize(size),posn)
 		background = background.convert(device.mode)	#将图像转换为单色模式
+		device.contrast(10)	#将屏幕对比度调节至最低以便扫码
 		while not self.next.is_set():
 			device.display(background)
 	

@@ -15,7 +15,7 @@ class Conversation(object):
         self._logger = logging.getLogger(__name__)
         self.persona = persona
         self.mic = mic
-        self.brain = Brain(mic)
+        self.brain = Brain(mic,oled)
         self.notifier = Notifier(config.get(), self.brain)
         self.wxbot = None
 
@@ -30,8 +30,8 @@ class Conversation(object):
         self.oled = oled
         
         # !!! 常驻于主动监听,正式使用时务必去除 ！！！
-        #self.mic.chatting_mode = True
-        #self.mic.skip_passive = True
+        self.mic.chatting_mode = True
+        self.mic.skip_passive = True
     
     @staticmethod
     def is_proper_time():
@@ -93,6 +93,8 @@ class Conversation(object):
                     self.mic.skip_passive = False
                 #continue
 
+            threshold = None
+
             if self.pixels:
                 self.pixels.wakeup()
             self._logger.debug("Started to listen actively with threshold: %r",
@@ -101,7 +103,11 @@ class Conversation(object):
                 self.oled.listen()
 
             threshold = None
-            input = self.mic.activeListenToAllOptions(threshold)
+
+            if self.mic.chatting_mode:
+                input = self.mic.activeListenWithButton()
+            else:
+                input = self.mic.activeListenToAllOptions(threshold)
             self._logger.debug("Stopped to listen actively with threshold: %r",
                                threshold)
 
@@ -109,7 +115,7 @@ class Conversation(object):
                 self.pixels.think()
 
             if input:
-                self.brain.query(input, self.wxbot, oled=self.oled)
+                self.brain.query(input, self.wxbot)
             elif config.get('shut_up_if_no_input', False):
                 self._logger.info("Active Listen return empty")
             else:

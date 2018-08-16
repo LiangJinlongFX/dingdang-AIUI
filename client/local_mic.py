@@ -20,10 +20,14 @@ class Mic():
 		self.speaker = speaker	#获取发声方法
 		self._audio = pyaudio.PyAudio()
 		self.sound = player.get_sound_manager(self._audio)	#获取声音播放方法
-		self.music = player.get_music_manager()
 		self.stop_passive =False
 		self.skip_passive =False
 		self.chatting_mode =False
+        #音乐播放相关定义
+		self.music = player.get_music_manager() #添加音乐播放实例
+		self.music_list = []    #音乐播放列表
+		self.music_idx = -1 #当前播放的音乐序号
+		self.music_playing = False  #当前是否在播放音乐
 		return
 	
 	#本地调试默认已主动唤醒
@@ -34,12 +38,20 @@ class Mic():
 	def activeListenToAllOptions(self, THRESHOLD=None, LISTEN=True,MUSIC=False):
 		return [self.activeListen(THRESHOLD=THRESHOLD, LISTEN=LISTEN,MUSIC=MUSIC)]
 
-    #用文本输入替代主动语音识别
+	def activeListenWithButton(self, THRESHOLD=None, LISTEN=True, MUSIC=False):
+		if not LISTEN:
+			return self.prev
+		input = raw_input("YOU: ")
+		return input
+
+		
+	#用文本输入替代主动语音识别
 	def activeListen(self, THRESHOLD=None, LISTEN=True, MUSIC=False):
 		if not LISTEN:
 			return self.prev
 		input = raw_input("YOU: ")
 		self.prev = input
+		print(input)
 		return input
 
     #机器人回复方式

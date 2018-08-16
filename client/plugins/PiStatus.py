@@ -87,9 +87,3 @@ def handle(text,mic,profile,wxbot=None,pixels=None,oled=None):
 
 def isValid(text):
     return any(word in text for word in [u"树莓派状态", u"运行状态"])
-
-
-
-
-        
-

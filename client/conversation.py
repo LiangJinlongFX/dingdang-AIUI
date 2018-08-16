@@ -105,6 +105,7 @@ class Conversation(object):
             threshold = None
 
             if self.mic.chatting_mode:
+                self._logger.debug("Started to listen actively with Button")
                 input = self.mic.activeListenWithButton()
             else:
                 input = self.mic.activeListenToAllOptions(threshold)

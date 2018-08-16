@@ -16,6 +16,7 @@ from client import WechatBot
 from client.conversation import Conversation
 from client import config
 from client.drivers.oled import OLED
+from client.app_utils import emailUser
 
 try:
     import RPi.GPIO as GPIO
@@ -75,9 +76,11 @@ class Dingdang(object):
 
     def start_wxbot(self):
         self.mic.say(u"请扫描如下二维码登录微信", cache=True)
-        self.wxBot.get_uuid()
-        self.wxBot.gen_qr_code(os.path.join(dingdangpath.TEMP_PATH,'wxqr.png'))
-        self.oled.show_QR(os.path.join(dingdangpath.TEMP_PATH,'wxqr.png'))
+        self.wxBot.get_uuid()   #获取微信登录UUID
+        self.wxBot.gen_qr_code(os.path.join(dingdangpath.TEMP_PATH,'wxqr.png')) #生成登录二维码
+        self.oled.show_QR(os.path.join(dingdangpath.TEMP_PATH,'wxqr.png'))      #OLED显示二维码
+        img_path = os.path.join(dingdangpath.TEMP_PATH,'wxqr.png')
+        emailUser(config.get(),u"请扫描二维码以登录微信","",[img_path])
         print(u"登录成功后，可以与自己的微信账号（不是文件传输助手）交互")
     
     def run_wxbot(self):

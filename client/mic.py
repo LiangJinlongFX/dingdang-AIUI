@@ -47,6 +47,7 @@ class Mic:
         self.wxbot = None
         self.passive_stt_engine = passive_stt_engine
         self.active_stt_engine = active_stt_engine
+        self.active_stt_engine_button = active_stt_engine
         self.dingdangpath = dingdangpath
         self._logger.info("Initializing PyAudio. ALSA/Jack error messages " +
                           "that pop up during this process are normal and " +
@@ -60,10 +61,14 @@ class Mic:
         self._audio = pyaudio.PyAudio()
         self._logger.info("Initialization of PyAudio completed.")
         self.sound = player.get_sound_manager(self._audio)
-        self.music = player.get_music_manager() #   
         self.stop_passive = False
         self.skip_passive = False
         self.chatting_mode = False
+        #音乐播放相关定义
+        self.music = player.get_music_manager() #添加音乐播放实例
+        self.music_list = []    #音乐播放列表
+        self.music_idx = -1 #当前播放的音乐序号
+        self.music_playing = False  #当前是否在播放音乐
         
         #初始化唤醒检测引脚
         self.wakeup_pin = config.get('WakeUp_Pin',12)
@@ -73,9 +78,15 @@ class Mic:
         #初始化主动聊天按键引脚
         self.play_pin = config.get('Play_Pin',11)
         GPIO.setmode(GPIO.BOARD)
-        GPIO.setwarnings(False)
-        #GPIO.setup(self.play_pin, GPIO.IN)
-        #GPIO.add_event_detect(self.play_pin, GPIO.BOTH)
+        #初始化录音状态灯
+        self.arecord_pin = None
+        if config.has('signal_led'):
+            signal_led_profile = config.get('signal_led')
+            if signal_led_profile['enable'] and signal_led_profile['arecord_pin']:
+                self.arecord_pin = signal_led_profile['arecord_pin']
+                GPIO.setup(self.arecord_pin, GPIO.OUT, initial=GPIO.HIGH)
+
+
         
 
     def __del__(self):
@@ -282,9 +293,11 @@ class Mic:
         LISTEN_TIME = 12
         GPIO.setup(self.play_pin, GPIO.IN)
         GPIO.add_event_detect(self.play_pin, GPIO.BOTH)
+        self.beforeListenEvent()
 
         while not GPIO.event_detected(self.play_pin):
             pass
+        self._logger.debug("Start recording...")
 
         # prepare recording stream
         stream = self._audio.open(format=pyaudio.paInt16,
@@ -292,6 +305,9 @@ class Mic:
                                   rate=RATE,
                                   input=True,
                                   frames_per_buffer=CHUNK)
+
+        if self.arecord_pin:
+            GPIO.output(self.arecord_pin, GPIO.LOW)
 
         frames = []
 
@@ -315,6 +331,10 @@ class Mic:
             self._logger.debug(e)
             pass
 
+        self._logger.debug("End recording...")
+        if self.arecord_pin:
+            GPIO.output(self.arecord_pin, GPIO.HIGH)
+        
         self.endListenEvent()
 
         with tempfile.SpooledTemporaryFile(mode='w+b') as f:
@@ -326,7 +346,82 @@ class Mic:
             wav_fp.close()
             f.seek(0)
             GPIO.cleanup(self.play_pin)
-            return self.active_stt_engine.transcribe(f)
+            self._logger.debug("start transcribe...")
+            return self.active_stt_engine_button.transcribe(f)
+    
+    def arecord(self, THRESHOLD=None, profile=None, wxbot=None):
+        """
+        录音
+        """
+        from app_utils import sendToUser
+        
+        self.beforeListenEvent()
+
+        RATE = 16000
+        CHUNK = 1024
+        LISTEN_TIME = 12
+
+        # check if no threshold provided
+        if THRESHOLD is None:
+            THRESHOLD = self.fetchThreshold()
+
+        # prepare recording stream
+        stream = self._audio.open(format=pyaudio.paInt16,
+                                  channels=1,
+                                  rate=RATE,
+                                  input=True,
+                                  frames_per_buffer=CHUNK)
+
+        if self.arecord_pin:
+            GPIO.output(self.arecord_pin, GPIO.LOW)
+        frames = []
+        # increasing the range # results in longer pause after command
+        # generation
+        lastN = [THRESHOLD * 1.2] * 40
+
+        for i in range(0, int(RATE / CHUNK * LISTEN_TIME)):
+            try:
+                data = stream.read(CHUNK)
+                frames.append(data)
+                score = self.getScore(data)
+
+                lastN.pop(0)
+                lastN.append(score)
+
+                average = sum(lastN) / float(len(lastN))
+
+                # TODO: 0.8 should not be a MAGIC NUMBER!
+                if average < THRESHOLD * 0.8:
+                    break
+            except Exception as e:
+                self._logger.error(e)
+                continue
+
+        if self.arecord_pin:
+            GPIO.output(self.arecord_pin, GPIO.HIGH)
+        self.endListenEvent()
+
+        # save the audio data
+        try:
+            stream.stop_stream()
+            stream.close()
+        except Exception as e:
+            self._logger.debug(e)
+            pass
+
+        with tempfile.SpooledTemporaryFile(mode='w+b') as f:
+            wav_fp = wave.open(f, 'wb')
+            wav_fp.setnchannels(1)
+            wav_fp.setsampwidth(pyaudio.get_sample_size(pyaudio.paInt16))
+            wav_fp.setframerate(RATE)
+            wav_fp.writeframes(''.join(frames))
+            wav_fp.close()
+            f.seek(0)
+            if sendToUser(profile, wxbot, u"这是刚刚为您拍摄的照片", "", [f], []):
+                return True
+            else:
+                return False
+    
     
     def activeListen(self, THRESHOLD=None, LISTEN=True, MUSIC=False):
         """
@@ -363,6 +458,8 @@ class Mic:
                                   input=True,
                                   frames_per_buffer=CHUNK)
 
+        if self.arecord_pin:
+            GPIO.output(self.arecord_pin, GPIO.LOW)
         frames = []
         # increasing the range # results in longer pause after command
         # generation
@@ -386,6 +483,8 @@ class Mic:
                 self._logger.error(e)
                 continue
 
+        if self.arecord_pin:
+            GPIO.output(self.arecord_pin, GPIO.HIGH)
         self.endListenEvent()
 
         # save the audio data

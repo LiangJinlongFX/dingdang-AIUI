@@ -138,12 +138,12 @@ def getTimezone(profile):
 
 
 def create_reminder(remind_event, remind_time):
+    ''' 添加备忘 '''
     _logger = logging.getLogger(__name__)
-    if len(remind_time) == 14:
+    if len(remind_time) == 8:
         cmd = 'task add ' + remind_event + ' due:' +\
             remind_time[:4] + '-' + remind_time[4:6] + '-' + \
-            remind_time[6:8] + 'T' + remind_time[8:10] + ':' + \
-            remind_time[10:12] + ':' + remind_time[12:]
+            remind_time[6:8]
         print(cmd)
         try:
             res = subprocess.call(

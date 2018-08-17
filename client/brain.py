@@ -26,17 +26,10 @@ class Brain(object):
         self._logger = logging.getLogger(__name__)
         self.handling = False
         self.pixels = None
-        # 检查是否使能了插件信号灯配置
-        if config.has('signal_led_plugs'):
-            signal_led_profile = config.get('signal_led_plugs')
-            if signal_led_profile['enable'] and \
-                signal_led_profile['gpio_mode'] and \
-                    signal_led_profile['pin']:
-                self.pixels = Pixels(signal_led_profile['gpio_mode'],
-                                     signal_led_profile['pin'])
+
         #检查是否配置了OLED
         if oled:
-            self.oled = oled       
+            self.oled = oled   
             
 
 

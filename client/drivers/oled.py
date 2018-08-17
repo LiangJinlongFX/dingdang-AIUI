@@ -49,7 +49,7 @@ class OLED():
 
 	def listen(self):
 		''' 用于正在监听的动画 '''
-		image_path = dingdangpath.data('images','free6.gif')
+		image_path = dingdangpath.data('images','listen.gif')
 		def f():
 			self._DisplayGIF(image_path=image_path)
 
@@ -58,7 +58,31 @@ class OLED():
 
 	def speak(self):
 		''' 用于正在说话的动画 '''
-		image_path = dingdangpath.data('images','free4.gif')
+		image_path = dingdangpath.data('images','say.gif')
+		def f():
+			self._DisplayGIF(image_path=image_path)
+
+		self.next.set()
+		self.queue.put(f)
+
+	def online(self):
+		''' 用于等待网络响应的动画 '''
+		a = ['1','2','3']
+		b = random.sample(a,1)
+		name = "online" + str(b[0]) + ".gif"
+		image_path = dingdangpath.data('images',name)
+		def f():
+			self._DisplayGIF(image_path=image_path)
+
+		self.next.set()
+		self.queue.put(f)
+
+	def free(self):
+		''' 用于自由显示的动画 '''
+		a = ['1','2','3']
+		b = random.sample(a,1)
+		name = "free" + str(b[0]) + ".gif"
+		image_path = dingdangpath.data('images',name)
 		def f():
 			self._DisplayGIF(image_path=image_path)
 
@@ -83,6 +107,7 @@ class OLED():
 		self.queue.put(f)
 
 	def off(self):
+		''' 关闭显示 '''
 		self.next.set()
 		self.queue.put(self._off)
 

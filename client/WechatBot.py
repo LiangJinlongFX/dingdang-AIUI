@@ -3,6 +3,7 @@
 
 import time
 import os
+import logging
 from client.wxbot import WXBot
 
 from client import dingdangpath
@@ -14,6 +15,7 @@ from client import config
 class WechatBot(WXBot):
     def __init__(self, brain,):
         WXBot.__init__(self)
+        self.logger = logging.getLogger(__name__)
         self.brain = brain
         self.music_mode = None
         self.last = time.time()
@@ -40,6 +42,7 @@ class WechatBot(WXBot):
             from_user = profile['first_name'] + '说：'
             #msg_data = from_user + msg['content']['data']
             msg_data = msg['content']['data']
+            self.logger.debug(msg['content']['type'])
             if msg['content']['type'] == 0:
                 if msg_data.startswith(profile['robot_name_cn']+": "):
                     return
@@ -84,3 +87,12 @@ class WechatBot(WXBot):
                 mp3_file = os.path.join(dingdangpath.TEMP_PATH,
                                         'voice_%s.mp3' % msg['msg_id'])
                 player.get_music_manager().play_block(mp3_file)
+        elif msg['msg_type_id'] == 5:
+            if msg['user']['name'] == u"小冰":
+                msg_data = msg['content']['data']
+                if msg['content']['type'] == 0:
+                    self.brain.mic.say("%s" % msg_data)
+                elif msg['content']['type'] == 4:
+                    mp3_file = os.path.join(dingdangpath.TEMP_PATH,
+                                        'voice_%s.mp3' % msg['msg_id'])
+                    player.get_music_manager().play_block(mp3_file)

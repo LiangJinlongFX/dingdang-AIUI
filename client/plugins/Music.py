@@ -26,7 +26,7 @@ SLUG = "music"
 def handle(text,mic,profile,wxbot=None, pixels=None, oled=None):
     logger = logging.getLogger(__name__)
     try:
-        if any(word in text for word in [u'听歌',u'听儿歌',u'听音乐']):
+        if any(word in text for word in [u'听歌',u'听儿歌',u'听音乐',u'播放音乐']):
             if mic.music_list == []:
                 '''
                 # 判断是否使能网络FM播放
@@ -174,5 +174,5 @@ class BaiduFM:
 
 def isValid(text):
     ''' 匹配有效性查询 '''
-    return any(word in text for word in [u'听歌',u'听儿歌',
-                u'上一首',u'换歌',u'下一首',u'关闭音乐','不听了'])
+    return any(word in text for word in [u'听歌',u'听儿歌',u'播放音乐',
+                u'听音乐',u'上一首',u'换歌',u'下一首',u'关闭音乐','不听了'])

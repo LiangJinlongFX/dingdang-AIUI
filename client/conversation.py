@@ -30,8 +30,8 @@ class Conversation(object):
         self.oled = oled
         
         # !!! 常驻于主动监听,正式使用时务必去除 ！！！
-        self.mic.chatting_mode = True
-        self.mic.skip_passive = True
+        #self.mic.chatting_mode = True
+        #self.mic.skip_passive = True
     
     @staticmethod
     def is_proper_time():
@@ -99,6 +99,7 @@ class Conversation(object):
                 self.pixels.wakeup()
             self._logger.debug("Started to listen actively with threshold: %r",
                                threshold)
+            # 语音唤醒后显示倾听动画
             if self.oled:
                 self.oled.listen()
 
@@ -116,14 +117,14 @@ class Conversation(object):
                 self.pixels.think()
 
             if input:
+                if self.oled:
+                    self.oled.online()
                 self.brain.query(input, self.wxbot)
             elif config.get('shut_up_if_no_input', False):
                 self._logger.info("Active Listen return empty")
             else:
                 if not self.mic.chatting_mode:
                     self.mic.say(u"啥事?")
-            #if self.oled:
-            #    self.oled.speak()
             if self.pixels:
                 self.pixels.off()
             if self.oled:

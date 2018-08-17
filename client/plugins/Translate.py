@@ -58,7 +58,7 @@ def translate(app_id,app_secret,sentence):
     Params = {
         'q' : sentence,
         'from' : 'auto',
-        'to' : 'EN',
+        'to' : 'auto',
         'appKey' : app_id,
         'salt' : salt,
         'sign' : sign

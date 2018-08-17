@@ -30,7 +30,7 @@ class Mic:
     speechRec = None
     speechRec_persona = None
 
-    def __init__(self, speaker, passive_stt_engine, active_stt_engine):
+    def __init__(self, speaker, passive_stt_engine, active_stt_engine, active_stt_engine_button):
         """
         Initiates the pocketsphinx instance.
 
@@ -47,7 +47,7 @@ class Mic:
         self.wxbot = None
         self.passive_stt_engine = passive_stt_engine
         self.active_stt_engine = active_stt_engine
-        self.active_stt_engine_button = active_stt_engine
+        self.active_stt_engine_button = active_stt_engine_button
         self.dingdangpath = dingdangpath
         self._logger.info("Initializing PyAudio. ALSA/Jack error messages " +
                           "that pop up during this process are normal and " +
@@ -78,6 +78,8 @@ class Mic:
         #初始化主动聊天按键引脚
         self.play_pin = config.get('Play_Pin',11)
         GPIO.setmode(GPIO.BOARD)
+        GPIO.setup(self.play_pin, GPIO.IN)
+        GPIO.add_event_detect(self.play_pin, GPIO.BOTH)
         #初始化录音状态灯
         self.arecord_pin = None
         if config.has('signal_led'):
@@ -291,8 +293,7 @@ class Mic:
         RATE = 16000
         CHUNK = 1024
         LISTEN_TIME = 12
-        GPIO.setup(self.play_pin, GPIO.IN)
-        GPIO.add_event_detect(self.play_pin, GPIO.BOTH)
+
         self.beforeListenEvent()
 
         while not GPIO.event_detected(self.play_pin):
@@ -337,6 +338,7 @@ class Mic:
         
         self.endListenEvent()
 
+
         with tempfile.SpooledTemporaryFile(mode='w+b') as f:
             wav_fp = wave.open(f, 'wb')
             wav_fp.setnchannels(1)
@@ -345,9 +347,8 @@ class Mic:
             wav_fp.writeframes(''.join(frames))
             wav_fp.close()
             f.seek(0)
-            GPIO.cleanup(self.play_pin)
-            self._logger.debug("start transcribe...")
-            return self.active_stt_engine_button.transcribe(f)
+            res =  self.active_stt_engine.transcribe(f)
+        return res
     
     def arecord(self, THRESHOLD=None, profile=None, wxbot=None):
         """

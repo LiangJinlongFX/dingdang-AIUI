@@ -26,7 +26,7 @@ SLUG = u"weixin"
 def handle(text, mic, profile, wxbot=None, pixels=None, oled=None):
     #logger = logging.getLogger(__name__)
     dest_file = '/home/pi/out.mp3'
-    if any(word in text for word in [u'微信']):
+    if any(word in text for word in [u'微信留言']):
         if wxbot:
             mic.say('请在滴一声后开始录音', cache=True)
             if sendToUser(profile, wxbot, u"这是刚刚的语音留言", "", [dest_file], []):
@@ -37,4 +37,4 @@ def handle(text, mic, profile, wxbot=None, pixels=None, oled=None):
 
 def isValid(text):
     ''' 匹配有效性查询 '''
-    return any(word in text for word in [u'微信',u'退出微信'])
+    return any(word in text for word in [u'微信留言'])

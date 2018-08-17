@@ -66,7 +66,7 @@ class Dingdang(object):
         self.mic = Mic(
             tts_engine_class.get_instance(),
             stt_passive_engine_class.get_passive_instance(),
-            stt_engine_class.get_active_instance())
+            stt_engine_class.get_active_instance(),stt_engine_class.get_active_instance())
 
         # Initialize OLED
         self.oled = None

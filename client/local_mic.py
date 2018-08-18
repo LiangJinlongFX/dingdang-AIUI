@@ -16,7 +16,7 @@ except NameError:
 class Mic():
 	"""docstring for Mic"""
 	prev = None
-	def __init__(self, speaker,passive_stt_engine,active_stt_engine):
+	def __init__(self, speaker,passive_stt_engine,active_stt_engine,active_stt_engine_button):
 		self.speaker = speaker	#获取发声方法
 		self._audio = pyaudio.PyAudio()
 		self.sound = player.get_sound_manager(self._audio)	#获取声音播放方法

@@ -67,6 +67,7 @@ class Mic:
         #音乐播放相关定义
         self.music = player.get_music_manager() #添加音乐播放实例
         self.music_list = []    #音乐播放列表
+        self.music_current = None   #当前播放歌曲的subprocess对象
         self.music_idx = -1 #当前播放的音乐序号
         self.music_playing = False  #当前是否在播放音乐
         
@@ -79,7 +80,6 @@ class Mic:
         self.play_pin = config.get('Play_Pin',11)
         GPIO.setmode(GPIO.BOARD)
         GPIO.setup(self.play_pin, GPIO.IN)
-        GPIO.add_event_detect(self.play_pin, GPIO.BOTH)
         #初始化录音状态灯
         self.arecord_pin = None
         if config.has('signal_led'):
@@ -286,6 +286,35 @@ class Mic:
 
         return False, transcribed
     '''
+
+
+    def music_control(self):
+        """ 
+        音乐播放控制
+        实现自动切换歌曲
+        """
+        if self.music_current == None:
+            return
+        if self.music_list == None:
+            return
+        try:
+            # 当前播放的歌曲播放完了或者异常退出
+            if self.music_current.poll() != None:
+                self.music_idx = self.music_idx + 1
+                # 如果歌曲索引不在有效范围内则重头开始播放
+                if self.music_idx < 0 or self.music_idx > len(self.music_list):
+                    self.music_idx = 0
+                try:
+                    self.music_current = subprocess.Popen("play %s &" % mic.music_list[mic.music_idx]['play_path'],shell=True,stdout=subprocess.PIPE)
+                    self._logger.debug("play %s" % mic.music_list[mic.music_idx]['play_path'])
+                except Exception as e:
+                    # 异常则将当前播放状态False
+                    self._logger.error(e)
+                    self.music_playing = False
+        except Exception:
+            pass
+
+
     def activeListenWithButton(self):
         """
         按键触发的主动录音方法
@@ -295,6 +324,8 @@ class Mic:
         LISTEN_TIME = 12
 
         self.beforeListenEvent()
+
+        GPIO.add_event_detect(self.play_pin, GPIO.BOTH, bouncetime=500)
 
         while not GPIO.event_detected(self.play_pin):
             pass
@@ -337,6 +368,7 @@ class Mic:
             GPIO.output(self.arecord_pin, GPIO.HIGH)
         
         self.endListenEvent()
+        GPIO.remove_event_detect(self.play_pin)
 
 
         with tempfile.SpooledTemporaryFile(mode='w+b') as f:
@@ -350,7 +382,7 @@ class Mic:
             res =  self.active_stt_engine.transcribe(f)
         return res
     
-    def arecord(self, THRESHOLD=None, profile=None, wxbot=None):
+    def arecord(self, file_name):
         """
         录音
         """
@@ -363,8 +395,7 @@ class Mic:
         LISTEN_TIME = 12
 
         # check if no threshold provided
-        if THRESHOLD is None:
-            THRESHOLD = self.fetchThreshold()
+        THRESHOLD = self.fetchThreshold()
 
         # prepare recording stream
         stream = self._audio.open(format=pyaudio.paInt16,
@@ -410,19 +441,15 @@ class Mic:
             self._logger.debug(e)
             pass
 
-        with tempfile.SpooledTemporaryFile(mode='w+b') as f:
-            wav_fp = wave.open(f, 'wb')
-            wav_fp.setnchannels(1)
-            wav_fp.setsampwidth(pyaudio.get_sample_size(pyaudio.paInt16))
-            wav_fp.setframerate(RATE)
-            wav_fp.writeframes(''.join(frames))
-            wav_fp.close()
-            f.seek(0)
-            if sendToUser(profile, wxbot, u"这是刚刚为您拍摄的照片", "", [f], []):
-                return True
-            else:
-                return False
-    
+        # save audio file and return filename
+        wav_fp = wave.open(file_name, 'wb')
+        wav_fp.setnchannels(1)
+        wav_fp.setsampwidth(pyaudio.get_sample_size(pyaudio.paInt16))
+        wav_fp.setframerate(RATE)
+        wav_fp.writeframes(''.join(frames))
+        wav_fp.close()
+
+
     
     def activeListen(self, THRESHOLD=None, LISTEN=True, MUSIC=False):
         """

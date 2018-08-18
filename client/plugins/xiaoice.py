@@ -28,17 +28,20 @@ def handle(text, mic, profile, wxbot=None, pixels=None, oled=None):
     while True:
         input = mic.activeListenWithButton()
         input = input[0]
-        print("%s" % input)
-        if any(word in input for word in [u"退出",u"不聊"]):
-            break
-        try:
-            if wxbot.send_msg_by_uid(input,xiaoice_uid):
-                logger.debug("发送成功")
-            else:
-                logger.debug("发送失败")
-        except Exception as e:
-            logger.error(e)
+        if input:
+            if any(word in input for word in [u"退出",u"不聊"]):
+                break
+            try:
+                if wxbot.send_msg_by_uid(input,xiaoice_uid):
+                    logger.debug("发送成功")
+                else:
+                    logger.debug("发送失败")
+                    mic.say(u"哼,不理你", cache=True)
+            except Exception as e:
+                logger.error(e)
+        else:
+            mic.say(u"说啥呢", cache=True)
     mic.say(u"轻轻的我走了，正如我轻轻地来。我们下次再聊吧", cache=True)
 
 def isValid(text):
-    return any(word in text for word in [u"女神",u"小冰"])
+    return any(word in text for word in [u"女神",u"小冰",u"小兵"])

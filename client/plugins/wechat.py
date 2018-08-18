@@ -10,7 +10,8 @@
 import os
 import sys
 import logging
-from app_utils import sendToUser
+from app_utils import wechatUser
+from client import dingdangpath
 
 try:
     reload         # Python 2
@@ -24,15 +25,22 @@ WORDS = [u"WEIXIN"]
 SLUG = u"weixin"
 
 def handle(text, mic, profile, wxbot=None, pixels=None, oled=None):
-    #logger = logging.getLogger(__name__)
-    dest_file = '/home/pi/out.mp3'
-    if any(word in text for word in [u'微信留言']):
-        if wxbot:
-            mic.say('请在滴一声后开始录音', cache=True)
-            if sendToUser(profile, wxbot, u"这是刚刚的语音留言", "", [dest_file], []):
+    logger = logging.getLogger(__name__)
+    if wxbot != None:
+        dest_file = os.path.join(dingdangpath.TEMP_PATH,'wx_arecoed.wav')
+        mic.say('请在滴一声后开始录音', cache=True)
+        try:
+            mic.arecord(dest_file) #录取音频
+            if wechatUser(profile, wxbot, u"这是刚刚的语音留言", "", [dest_file], []):
                 mic.say('发送成功', cache=True)
             else:
                 mic.say('发送失败', cache=True)
+        except Exception as e:
+            logger.error(e)
+            mic.say('发送失败', cache=True)
+    else:
+        mic.say('亲,你还没登录微信哦', cache=True)
+        return
 
 
 def isValid(text):

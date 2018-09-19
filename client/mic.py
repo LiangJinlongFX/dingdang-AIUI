@@ -316,6 +316,12 @@ class Mic:
 
 
     def activeListenWithButton(self):
+        
+        options = self.activeListenWithButtonLOW()
+        if options:
+            return options[0]
+
+    def activeListenWithButtonLOW(self):
         """
         按键触发的主动录音方法
         """
@@ -469,7 +475,6 @@ class Mic:
 
             Returns a list of the matching options or None
         """
-        self.beforeListenEvent()
 
         RATE = 16000
         CHUNK = 1024
@@ -478,6 +483,8 @@ class Mic:
         # check if no threshold provided
         if THRESHOLD is None:
             THRESHOLD = self.fetchThreshold()
+
+        self.beforeListenEvent()
 
         # prepare recording stream
         stream = self._audio.open(format=pyaudio.paInt16,

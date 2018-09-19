@@ -20,6 +20,7 @@ def handle(text, mic, profile, wxbot=None, pixels=None, oled=None):
     logger = logging.getLogger(__name__)
     if wxbot == None:
         mic.say(u"你还没有登录微信呢", cache=True)
+        return
     xiaoice_uid = wxbot.get_user_id(u'小冰')
     if not xiaoice_uid:
         mic.say(u"小冰不见了", cache=True)
@@ -27,7 +28,6 @@ def handle(text, mic, profile, wxbot=None, pixels=None, oled=None):
     mic.say(u"我是人见人爱的小冰，快来和我聊聊天吧", cache=True)
     while True:
         input = mic.activeListenWithButton()
-        input = input[0]
         if input:
             if any(word in input for word in [u"退出",u"不聊"]):
                 break

@@ -150,10 +150,6 @@ kill -9 PID号
 * 插件请提交到 [dingdang-contrib](https://github.com/dingdang-robot/dingdang-contrib) ；
 * 您的捐赠将鼓励我继续完善叮当，支持支付宝、微信等捐赠形式。捐赠的时候，请备注下您的昵称或姓名，我将会把您备注的信息添加到 [捐赠者名单](https://github.com/dingdang-robot/dingdang-robot/wiki/donate-list) 中：
 
-| 支付宝 | 微信支付 |
-| ------ | --------- |
-| <img src="http://7xj89i.com1.z0.glb.clouddn.com/ali_pay_01.jpg" height="248px" width="164px" title="支付宝" style="display:inherit;"/> | <img src="http://7xj89i.com1.z0.glb.clouddn.com/wechat_pay_02.png" height="248px" width="164px" title="微信支付" style="display:inherit;"/> |
-
 
 ## 联系
 
@@ -185,7 +181,7 @@ kill -9 PID号
 - 我想了解你的系统镜像都做了哪些定制？
 
   - 请参见 [dingdang 镜像与 Raspbian 系统的区别](https://github.com/dingdang-robot/dingdang-robot/wiki/different-with-raspbian) 。
-  
+
 - pi 账户默认登录密码是啥？
 
   - 与 Raspbian 系统默认密码相同，都是 raspberry 。

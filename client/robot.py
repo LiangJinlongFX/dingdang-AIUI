@@ -153,6 +153,7 @@ class AIUIRobot(AbstractRobot):
 		self._logger.debug("对话响应状态码："+str(json_data['code']))
 		if json_data['code'] != '0':
 			res_data = "响应失败"
+			self._logger.error(str(json_data))
 			return res_data,data_flag,data_body
 		json_str = json_data['data']
 		json_str1 = json_str[0]['intent']

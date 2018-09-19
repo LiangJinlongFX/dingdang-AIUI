@@ -32,7 +32,7 @@ def handle(text,mic,profile,wxbot=None, pixels=None, oled=None):
             input = mic.activeListen(MUSIC=True)
             if input is not None and any(word in input for word in [u"确认", u"好", u"是", u"OK"]):
                 mic.say('授权成功，开始进行相关操作', cache=True)
-                subprocess.Popen("sudo shutdown -t 5 now",shell=True)
+                subprocess.Popen("sudo poweroff",shell=True)
                 return
             else:
                 mic.say('授权失败，操作已取消，请重新尝试', cache=True)

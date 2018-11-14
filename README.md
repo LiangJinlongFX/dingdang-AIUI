@@ -1,15 +1,13 @@
 叮当——中文语音对话机器人
 =============
 
+###forked from [dingdang-robot/dingdang-robot](https://github.com/dingdang-robot/dingdang-robot)
+
 [![GitHub tag](https://img.shields.io/github/tag/dingdang-robot/dingdang-robot.svg)](https://github.com/dingdang-robot/dingdang-robot/releases)
 [![Travis](https://img.shields.io/travis/dingdang-robot/dingdang-robot.svg)](https://travis-ci.org/dingdang-robot/dingdang-robot)
 [![GitHub issues](https://img.shields.io/github/issues/dingdang-robot/dingdang-robot.svg)](https://github.com/dingdang-robot/dingdang-robot/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/dingdang-robot/dingdang-robot.svg)](https://github.com/dingdang-robot/dingdang-robot/pulls)
 [![GitHub pull requests](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/dingdang-robot/dingdang-robot/blob/master/LICENSE)
-[![QQ群](https://img.shields.io/badge/QQ%E7%BE%A4-580447290-red.svg
-)](http://onmw7y6f4.bkt.clouddn.com/dingdang-group.png)
-
-> 温馨提示：使用 [wzpan/dingdang-robot](https://github.com/wzpan/dingdang-robot/) 的用户请参考 [迁移仓库](https://github.com/dingdang-robot/dingdang-robot/wiki/transfer) 迁移到本仓库，以获得更新服务。
 
 叮当是一款可以工作在 Raspberry Pi 上的开源中文语音对话机器人/智能音箱项目，目的是让中国的Hacker们也能快速打造个性化的智能音箱。
 
@@ -141,32 +139,7 @@ kill -9 PID号
 * [官方插件列表](https://github.com/dingdang-robot/dingdang-robot/wiki/plugins)
 * [第三方插件](https://github.com/dingdang-robot/dingdang-contrib)
 
-
-## 贡献
-
-* 喜欢本项目请先打一颗星；
-* 提 bug 请到 [issue 页面](https://github.com/dingdang-robot/dingdang-robot/issues)；
-* 要贡献代码，欢迎 fork 之后再提 pull request；
-* 插件请提交到 [dingdang-contrib](https://github.com/dingdang-robot/dingdang-contrib) ；
-* 您的捐赠将鼓励我继续完善叮当，支持支付宝、微信等捐赠形式。捐赠的时候，请备注下您的昵称或姓名，我将会把您备注的信息添加到 [捐赠者名单](https://github.com/dingdang-robot/dingdang-robot/wiki/donate-list) 中：
-
-| 支付宝 | 微信支付 |
-| ------ | --------- |
-| <img src="http://7xj89i.com1.z0.glb.clouddn.com/ali_pay_01.jpg" height="248px" width="164px" title="支付宝" style="display:inherit;"/> | <img src="http://7xj89i.com1.z0.glb.clouddn.com/wechat_pay_02.png" height="248px" width="164px" title="微信支付" style="display:inherit;"/> |
-
-
-## 联系
-
-* 叮当的主要开发者是 [潘伟洲](http://hahack.com) 。
-* QQ 群：580447290（人数将满，为控制人数，需付费20元入群）
-* 论坛：[bbs.hahack.com](http://bbs.hahack.com)
-
-## 感谢
-
-* 叮当的前身是 [jasper-client](https://github.com/jasperproject/jasper-client)。感谢 [Shubhro Saha](http://www.shubhro.com/), [Charles Marsh](http://www.crmarsh.com/) and [Jan Holthuis](http://homepage.ruhr-uni-bochum.de/Jan.Holthuis/) 在 Jasper 项目上做出的优秀贡献；
-* 微信机器人使用的是 [liuwons](http://lwons.com/) 的 [wxBot](https://github.com/liuwons/wxBot)。
-* 感谢果果 [@qwedc001](http://github.com/qwedc001) 帮忙搭建维护 [论坛](http://bbs.hahack.com) 。
-* 感谢 [@GoldJohnKing](https://github.com/GoldJohnKing) 设计了叮当的 [logo](https://github.com/dingdang-robot/dingdang-robot/issues/39) 。
+* http://bbs.hahack.com)
 
 ## FAQ
 
@@ -185,7 +158,7 @@ kill -9 PID号
 - 我想了解你的系统镜像都做了哪些定制？
 
   - 请参见 [dingdang 镜像与 Raspbian 系统的区别](https://github.com/dingdang-robot/dingdang-robot/wiki/different-with-raspbian) 。
-  
+
 - pi 账户默认登录密码是啥？
 
   - 与 Raspbian 系统默认密码相同，都是 raspberry 。
